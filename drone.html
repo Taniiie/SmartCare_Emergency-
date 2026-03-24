@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drone Dispatch — SmartCare</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="./assets/css/shared.css">
+    <script defer src="./assets/js/shared.js"></script>
+
+    <style>
+        body {
+            padding-top: 70px;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .drone-layout {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            height: calc(100vh - 70px);
+            gap: 0;
+        }
+
+        /* Left Panel */
+        .control-panel {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-section {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .label-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Battery Bar */
+        .battery-container {
+            margin-top: 1rem;
+        }
+
+        .battery-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.4rem;
+        }
+
+        #batteryBar {
+            height: 100%;
+            width: 90%;
+            background: linear-gradient(90deg, #00cc7a, #00ff9d);
+            transition: width 0.5s ease;
+        }
+
+        /* Drone Cards */
+        .drone-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.6rem;
+        }
+
+        .drone-card.selected {
+            border-color: var(--cyan);
+            background: rgba(0, 229, 255, 0.05);
+        }
+
+        /* Cargo Grid */
+        .cargo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        .cargo-card {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cargo-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .cargo-card.selected {
+            border-color: var(--red);
+            background: rgba(255, 45, 59, 0.08);
+            box-shadow: 0 0 20px rgba(255, 45, 59, 0.15);
+        }
+
+        /* Mission Summary */
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.83rem;
+        }
+
+        .summary-label {
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+
+        .summary-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* Dispatch Button */
+        #dispatchBtn {
+            width: 100%;
+            height: 64px;
+            border-radius: 12px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #dispatchBtn:disabled {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            cursor: not-allowed;
+            font-size: 1rem;
+        }
+
+        #dispatchBtn.ready {
+            background: linear-gradient(135deg, #cc0011, #ff2d3b);
+            color: white;
+            box-shadow: 0 0 30px rgba(255, 45, 59, 0.3);
+        }
+
+        #dispatchBtn.ready:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(255, 45, 59, 0.4);
+            scale: 1.01;
+        }
+
+        #dispatchBtn.in-flight {
+            background: linear-gradient(135deg, #004d26, #00ff9d);
+            color: #04060f;
+        }
+
+        /* Active Mission Tracker */
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0.75rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00cc7a, #00ff9d);
+            transition: width 1s linear;
+        }
+
+        .stat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(0, 229, 255, 0.08);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            color: var(--cyan);
+            border-radius: 99px;
+            padding: 0.3rem 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+        }
+
+        /* Mission Log */
+        #missionLog {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            height: 200px;
+            overflow-y: auto;
+        }
+
+        @keyframes logFlash {
+            0% {
+                background: rgba(255, 220, 0, 0.1);
+            }
+
+            100% {
+                background: transparent;
+            }
+        }
+
+        /* Right Map Column */
+        #droneMap {
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Leaflet Overrides */
+        .leaflet-popup-content-wrapper {
+            background: #0b0f1e !important;
+            color: #f0f4ff !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            font-family: 'DM Sans', sans-serif !important;
+        }
+
+        .leaflet-popup-tip {
+            background: #0b0f1e !important;
+        }
+
+        .leaflet-container {
+            background: #04060f !important;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes droneBob {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .drone-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 400px;
+                overflow-y: auto;
+            }
+
+            body {
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">⚕ SmartCare</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="map.html">Live Map</a>
+            <a href="telemedicine.html">Telemedicine</a>
+            <a href="drone.html" class="active">Drone</a>
+            <a href="verify.html">Verify</a>
+            <a href="admin.html">Admin</a>
+            <button onclick="themeToggle()" id="themeToggle"
+                style="color: var(--red); cursor: pointer; border: none; background: none; font-size: 1.2rem;">🌓</button>
+        </div>
+    </nav>
+
+    <main class="drone-layout">
+        <!-- LEFT COLUMN -->
+        <aside class="control-panel">
+            <!-- HEADER -->
+            <div class="panel-section">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.05em;">🚁
+                            DRONE DISPATCH</h1>
+                        <p style="color: var(--muted); font-size: 0.8rem;">Mission Control Center</p>
+                    </div>
+                    <span id="droneStatusBadge" class="badge badge-green">● READY</span>
+                </div>
+                <div class="battery-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <p class="label-mono" style="margin: 0;">BATTERY</p>
+                        <span style="color: var(--green); font-size: 0.8rem; font-weight: 700;">90%</span>
+                    </div>
+                    <div class="battery-bar-bg">
+                        <div id="batteryBar"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FLEET -->
+            <div class="panel-section">
+                <p class="label-mono">AVAILABLE DRONES</p>
+                <div class="drone-card selected" id="drone-DRN-3">
+                    <div>
+                        <p style="font-weight: 700; font-size: 0.9rem;">🚁 DRN-3</p>
+                        <p style="color: var(--muted); font-size: 0.65rem;">Max Range: 15km · Speed: 65km/h</p>
+                    </div>
+                    <span class="badge badge-green" style="font-size: 0.55rem; padding: 0.2rem 0.5rem;">ACTIVE</span>
+                </div>
+                <div class="drone-card" id="drone-DRN-5">
+                    <div>
+                        <p style="font-weight: 700; font-size: 0.9rem; color: var(--muted);">🚁 DRN-5</p>
+                        <p style="color: var(--muted); font-size: 0.65rem;">Range: 12km · Speed: 55km/h</p>
+                    </div>
+                    <span class="badge"
+                        style="background: rgba(255,209,102,0.1); color: var(--yellow); font-size: 0.55rem; padding: 0.2rem 0.5rem;">STANDBY</span>
+                </div>
+                <div class="drone-card" id="drone-DRN-8" style="opacity: 0.6; cursor: not-allowed;">
+                    <div>
+                        <p style="font-weight: 700; font-size: 0.9rem; color: var(--muted);">🚁 DRN-8</p>
+                        <p style="color: var(--muted); font-size: 0.65rem;">Charging (42% remaining)</p>
+                    </div>
+                    <span class="badge"
+                        style="background: rgba(255,255,255,0.05); color: var(--muted); font-size: 0.55rem; padding: 0.2rem 0.5rem;">CHARGING</span>
+                </div>
+            </div>
+
+            <!-- CARGO -->
+            <div class="panel-section">
+                <p class="label-mono">SELECT CARGO</p>
+                <div class="cargo-grid">
+                    <div class="cargo-card" id="cargo-meds" onclick="selectCargo('meds')">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">💊</div>
+                        <p style="font-weight: 700; font-size: 0.8rem;">Medicines</p>
+                        <p style="color: var(--muted); font-size: 0.65rem;">⚖️ 0.5 kg</p>
+                    </div>
+                    <div class="cargo-card" id="cargo-aed" onclick="selectCargo('aed')">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚡</div>
+                        <p style="font-weight: 700; font-size: 0.8rem;">Defibrillator</p>
+                        <p style="color: var(--muted); font-size: 0.65rem;">⚖️ 2.0 kg</p>
+                    </div>
+                    <div class="cargo-card" id="cargo-kit" onclick="selectCargo('kit')">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🧰</div>
+                        <p style="font-weight: 700; font-size: 0.8rem;">Emergency Kit</p>
+                        <p style="color: var(--muted); font-size: 0.65rem;">⚖️ 1.5 kg</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DROP ZONE -->
+            <div class="panel-section">
+                <p class="label-mono">DROP ZONE TARGET</p>
+                <div
+                    style="background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.15); border-radius: 10px; padding: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.5rem;">📍</span>
+                    <div>
+                        <p id="targetStatus" style="color: var(--muted); font-size: 0.8rem; line-height: 1.4;">Click
+                            anywhere on the map to set drop zone</p>
+                    </div>
+                </div>
+                <p id="distanceInfo"
+                    style="display: none; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--cyan); margin-top: 0.75rem;">
+                    📏 Distance: 2.1 km · ETA: ~3:00</p>
+            </div>
+
+            <!-- MISSION SUMMARY -->
+            <div id="missionSummary" class="panel-section"
+                style="display: none; background: rgba(0,255,157,0.03); border-left: 3px solid var(--green);">
+                <h3
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--green); margin-bottom: 0.75rem;">
+                    ✅ MISSION READY</h3>
+                <div class="summary-row">
+                    <span class="summary-label">Drone</span>
+                    <span class="summary-value">DRN-3</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Cargo</span>
+                    <span id="summaryCargoName" class="summary-value">Emergency Kit</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Weight</span>
+                    <span id="summaryWeight" class="summary-value">1.5 kg</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Target</span>
+                    <span id="summaryTarget" class="summary-value">28.6280°N, 77.2190°E</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Battery</span>
+                    <span class="summary-value" style="color: var(--green);">90% (Sufficient)</span>
+                </div>
+            </div>
+
+            <!-- DISPATCH BUTTON -->
+            <div class="panel-section">
+                <button id="dispatchBtn" disabled>SELECT CARGO + SET TARGET FIRST</button>
+            </div>
+
+            <!-- ACTIVE MISSION TRACKER -->
+            <div id="activeMission" class="panel-section" style="display: none;">
+                <h3
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--cyan); margin-bottom: 0.75rem;">
+                    📡 ACTIVE MISSION</h3>
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <div id="missionETA"
+                        style="font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; color: var(--green); line-height: 1;">
+                        00:00</div>
+                    <p class="label-mono" style="margin-top: 0.25rem;">TIME TO DELIVERY</p>
+                </div>
+                <div class="progress-track">
+                    <div id="missionProgress" class="progress-fill"></div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem;">
+                    <span class="stat-pill">📡 ALT: 85m</span>
+                    <span class="stat-pill">💨 SPEED: 65 km/h</span>
+                </div>
+                <button id="abortBtn" class="btn-secondary"
+                    style="width: 100%; border-color: var(--red); color: var(--red); margin-top: 0.5rem; font-size: 0.8rem; padding: 0.6rem;">⚠️
+                    Abort Mission</button>
+            </div>
+
+            <!-- LOG -->
+            <div class="panel-section" style="flex: 1;">
+                <p class="label-mono">MISSION LOG</p>
+                <div id="missionLog">
+                    <!-- Entries added by JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- RIGHT COLUMN (MAP) -->
+        <div id="droneMap"></div>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Mission Logic -->
+    <script src="./assets/js/drone.js"></script>
+</body>
+
+</html>

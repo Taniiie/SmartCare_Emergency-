@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard — SmartCare</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/css/shared.css">
+    <script defer src="./assets/js/shared.js"></script>
+
+    <style>
+        body {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            padding-top: calc(70px + 2rem);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .kpi-accent {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-height: 350px;
+        }
+
+        /* Mini Stats */
+        .mini-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .mini-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .mini-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Activity & Locations */
+        .activity-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        #liveFeed {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            height: 280px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .location-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 4px;
+            transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.25rem;
+            font-size: 0.83rem;
+        }
+
+        th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
+        }
+
+        td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Filters */
+        .filter-btn {
+            padding: 0.4rem 0.85rem;
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.78rem;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        /* Badges */
+        .badge-critical {
+            animation: criticalPulse 1.5s infinite;
+        }
+
+        @keyframes criticalPulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes logFlash {
+            0% {
+                background: rgba(255, 220, 0, 0.1);
+            }
+
+            100% {
+                background: transparent;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mini-stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .activity-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mini-stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">⚕ SmartCare</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="map.html">Live Map</a>
+            <a href="telemedicine.html">Telemedicine</a>
+            <a href="drone.html">Drone</a>
+            <a href="verify.html">Verify</a>
+            <a href="admin.html" class="active">Admin</a>
+            <button onclick="themeToggle()" id="themeToggle"
+                style="color: var(--red); cursor: pointer; border: none; background: none; font-size: 1.2rem;">🌓</button>
+        </div>
+    </nav>
+
+    <main class="admin-container">
+        <!-- HEADER -->
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+            <div>
+                <div class="badge badge-red" style="font-size: 0.7rem;">📊 ADMIN PANEL</div>
+                <h1
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; line-height: 1; margin-top: 0.5rem;">
+                    Impact Dashboard</h1>
+                <p style="color: var(--muted); font-size: 0.95rem; margin-top: 0.25rem;">Real-time platform statistics
+                    and case analytics</p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <div id="currentDate"
+                    style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.6rem 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: var(--text);">
+                </div>
+                <button onclick="exportReport()" class="btn-primary"
+                    style="background: var(--red); border: none; padding: 0.6rem 1.25rem; font-size: 0.85rem;">⬇️ Export
+                    Report</button>
+            </div>
+        </header>
+
+        <!-- KPI ROW -->
+        <div class="kpi-grid">
+            <!-- Total Emergencies -->
+            <div class="kpi-card">
+                <div
+                    style="background: rgba(255,45,59,0.12); border: 1px solid rgba(255,45,59,0.25); border-radius: 12px; padding: 0.6rem; display: inline-flex;">
+                    <span style="font-size: 1.4rem;">🚨</span>
+                </div>
+                <div id="kpi1" class="kpi-val" data-target="1247"
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--red); line-height: 1.2; margin-top: 0.5rem;">
+                    0</div>
+                <p style="font-weight: 700; font-size: 0.9rem;">Total Emergencies</p>
+                <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem;">
+                    <span style="color: var(--green); font-size: 0.7rem; font-weight: 700;">↑ 12%</span>
+                    <span style="color: var(--muted); font-size: 0.7rem;">vs last month</span>
+                </div>
+                <div class="kpi-accent" style="background: var(--red);"></div>
+            </div>
+
+            <!-- Response Time -->
+            <div class="kpi-card">
+                <div
+                    style="background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.25); border-radius: 12px; padding: 0.6rem; display: inline-flex;">
+                    <span style="font-size: 1.4rem;">⚡</span>
+                </div>
+                <div id="kpi2" class="kpi-val" data-target="3.2"
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--cyan); line-height: 1.2; margin-top: 0.5rem;">
+                    0</div>
+                <p style="font-weight: 700; font-size: 0.9rem;">Avg Response Time <span
+                        style="font-size: 0.7rem; color: var(--muted); font-weight: 400;">(min)</span></p>
+                <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem;">
+                    <span style="color: var(--green); font-size: 0.7rem; font-weight: 700;">↓ 34%</span>
+                    <span style="color: var(--muted); font-size: 0.7rem;">improvement</span>
+                </div>
+                <div class="kpi-accent" style="background: var(--cyan);"></div>
+            </div>
+
+            <!-- Drone Deliveries -->
+            <div class="kpi-card">
+                <div
+                    style="background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.25); border-radius: 12px; padding: 0.6rem; display: inline-flex;">
+                    <span style="font-size: 1.4rem;">🚁</span>
+                </div>
+                <div id="kpi3" class="kpi-val" data-target="389"
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--green); line-height: 1.2; margin-top: 0.5rem;">
+                    0</div>
+                <p style="font-weight: 700; font-size: 0.9rem;">Drone Deliveries</p>
+                <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem;">
+                    <span style="color: var(--green); font-size: 0.7rem; font-weight: 700;">↑ 67%</span>
+                    <span style="color: var(--muted); font-size: 0.7rem;">this month</span>
+                </div>
+                <div class="kpi-accent" style="background: var(--green);"></div>
+            </div>
+
+            <!-- Villages Covered -->
+            <div class="kpi-card">
+                <div
+                    style="background: rgba(179,136,255,0.1); border: 1px solid rgba(179,136,255,0.25); border-radius: 12px; padding: 0.6rem; display: inline-flex;">
+                    <span style="font-size: 1.4rem;">🌍</span>
+                </div>
+                <div id="kpi4" class="kpi-val" data-target="847"
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--purple); line-height: 1.2; margin-top: 0.5rem;">
+                    0</div>
+                <p style="font-weight: 700; font-size: 0.9rem;">Villages Covered</p>
+                <div style="display: flex; align-items: center; gap: 0.4rem; margin-top: 0.5rem;">
+                    <span style="color: var(--green); font-size: 0.7rem; font-weight: 700;">↑ 23%</span>
+                    <span style="color: var(--muted); font-size: 0.7rem;">new this month</span>
+                </div>
+                <div class="kpi-accent" style="background: var(--purple);"></div>
+            </div>
+        </div>
+
+        <!-- CHARTS ROW -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <p style="font-weight: 700; font-size: 0.95rem;">📈 Response Time Trend</p>
+                <p style="color: var(--muted); font-size: 0.7rem; margin-bottom: 1.5rem;">Last 7 days (minutes)</p>
+                <div style="height: 220px;">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <p style="font-weight: 700; font-size: 0.95rem;">🍩 Response Types</p>
+                <p style="color: var(--muted); font-size: 0.7rem; margin-bottom: 1rem;">Distribution this month</p>
+                <div style="height: 180px;">
+                    <canvas id="doughnutChart"></canvas>
+                </div>
+                <div style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem;">
+                            <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--red);"></span>
+                            Ambulance
+                        </div>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700;">45%</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem;">
+                            <span
+                                style="width: 10px; height: 10px; border-radius: 50%; background: var(--cyan);"></span>
+                            Telemedicine
+                        </div>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700;">30%</span>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.8rem;">
+                            <span
+                                style="width: 10px; height: 10px; border-radius: 50%; background: var(--green);"></span>
+                            Drone
+                        </div>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700;">25%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-card">
+                <p style="font-weight: 700; font-size: 0.95rem;">📊 Weekly Cases</p>
+                <p style="color: var(--muted); font-size: 0.7rem; margin-bottom: 1.5rem;">Emergencies handled per day
+                </p>
+                <div style="height: 220px;">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECONDARY STATS -->
+        <div class="mini-stats-grid">
+            <div class="mini-card">
+                <p
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase;">
+                    👥 Lives Saved</p>
+                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--green);">3,841</div>
+            </div>
+            <div class="mini-card">
+                <p
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase;">
+                    📶 Network Uptime</p>
+                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--cyan);">99.7%</div>
+            </div>
+            <div class="mini-card">
+                <p
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase;">
+                    🚑 Ambulance Fleet</p>
+                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--red);">24 Units</div>
+            </div>
+            <div class="mini-card">
+                <p
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase;">
+                    ⭐ Satisfaction</p>
+                <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--yellow);">4.9/5</div>
+            </div>
+        </div>
+
+        <!-- ACTIVITY + LOCATIONS -->
+        <div class="activity-grid">
+            <!-- Live Feed -->
+            <section>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em;">⚡ LIVE
+                        ACTIVITY</h2>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div
+                            style="width: 8px; height: 8px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); animation: pulse 1.5s infinite;">
+                        </div>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--green);">LIVE</span>
+                    </div>
+                </div>
+                <div id="liveFeed"></div>
+            </section>
+
+            <!-- Locations -->
+            <section>
+                <h2
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; margin-bottom: 1rem;">
+                    📍 TOP LOCATIONS</h2>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <p style="font-weight: 700; font-size: 0.88rem; min-width: 120px;">Delhi NCR</p>
+                        <div
+                            style="flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                            <div class="location-bar-fill" data-width="100%" style="background: var(--red);"></div>
+                        </div>
+                        <p
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); min-width: 60px; text-align: right;">
+                            312 Cases</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <p style="font-weight: 700; font-size: 0.88rem; min-width: 120px;">Mumbai</p>
+                        <div
+                            style="flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                            <div class="location-bar-fill" data-width="63%" style="background: var(--cyan);"></div>
+                        </div>
+                        <p
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); min-width: 60px; text-align: right;">
+                            198 Cases</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <p style="font-weight: 700; font-size: 0.88rem; min-width: 120px;">Bengaluru</p>
+                        <div
+                            style="flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                            <div class="location-bar-fill" data-width="53%" style="background: var(--green);"></div>
+                        </div>
+                        <p
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); min-width: 60px; text-align: right;">
+                            167 Cases</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <p style="font-weight: 700; font-size: 0.88rem; min-width: 120px;">Chennai</p>
+                        <div
+                            style="flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                            <div class="location-bar-fill" data-width="46%" style="background: var(--yellow);"></div>
+                        </div>
+                        <p
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); min-width: 60px; text-align: right;">
+                            143 Cases</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <p style="font-weight: 700; font-size: 0.88rem; min-width: 120px;">Hyderabad</p>
+                        <div
+                            style="flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                            <div class="location-bar-fill" data-width="38%" style="background: var(--purple);"></div>
+                        </div>
+                        <p
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); min-width: 60px; text-align: right;">
+                            118 Cases</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <p style="font-weight: 700; font-size: 0.88rem; min-width: 120px;">Kolkata</p>
+                        <div
+                            style="flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
+                            <div class="location-bar-fill" data-width="28%" style="background: var(--cyan);"></div>
+                        </div>
+                        <p
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted); min-width: 60px; text-align: right;">
+                            89 Cases</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- CASES TABLE -->
+        <section class="table-container">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.05em;">📋 CASE
+                    HISTORY</h2>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="filter-btn" data-filter="all" onclick="filterCases('all')"
+                            style="background: var(--red); color: white; border-color: var(--red);">All</button>
+                        <button class="filter-btn" data-filter="resolved"
+                            onclick="filterCases('resolved')">Resolved</button>
+                        <button class="filter-btn" data-filter="progress" onclick="filterCases('progress')">In
+                            Progress</button>
+                        <button class="filter-btn" data-filter="critical"
+                            onclick="filterCases('critical')">Critical</button>
+                    </div>
+                    <input type="text" id="caseSearch" placeholder="🔍 Search cases..."
+                        style="background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.85rem; font-size: 0.82rem; width: 180px; outline: none; color: white;">
+                </div>
+            </div>
+
+            <table id="casesTable">
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Response</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="caseBody">
+                    <!-- Rendered by JS -->
+                </tbody>
+            </table>
+
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <p style="font-size: 0.72rem; color: var(--muted);">Showing 10 of 1,247 cases</p>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="filter-btn" style="border-radius: 6px;">← Prev</button>
+                    <button class="filter-btn"
+                        style="background: var(--red); color: white; border-color: var(--red); border-radius: 6px;">1</button>
+                    <button class="filter-btn" style="border-radius: 6px;">2</button>
+                    <button class="filter-btn" style="border-radius: 6px;">3</button>
+                    <button class="filter-btn" style="border-radius: 6px;">Next →</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOTTOM STRIP -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;">
+            <!-- System Status -->
+            <div
+                style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;">
+                <h3
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; margin-bottom: 1rem;">
+                    🖥️ SYSTEM STATUS</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 0.4rem 0;">
+                        <span style="font-size: 0.83rem;">API Server</span>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--green);">🟢
+                            OPERATIONAL</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 0.4rem 0;">
+                        <span style="font-size: 0.83rem;">Map Service</span>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--green);">🟢
+                            OPERATIONAL</span>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 0.4rem 0;">
+                        <span style="font-size: 0.83rem;">Video Service</span>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--green);">🟢
+                            OPERATIONAL</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;">
+                        <span style="font-size: 0.83rem;">Drone Network</span>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--yellow);">🟡
+                            MAINTENANCE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team -->
+            <div
+                style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;">
+                <h3
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; margin-bottom: 1rem;">
+                    👥 TEAM</h3>
+                <div style="display: flex; flex-direction: column;">
+                    <div
+                        style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+                        <div
+                            style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,45,59,0.1); border: 1px solid rgba(255,45,59,0.2); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--red);">
+                            T</div>
+                        <p style="font-weight: 700; font-size: 0.9rem;">Taniya</p>
+                    </div>
+                    <div
+                        style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+                        <div
+                            style="width: 40px; height: 40px; border-radius: 50%; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--cyan);">
+                            N</div>
+                        <p style="font-weight: 700; font-size: 0.9rem;">Nilesh Sahoo</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tech Tags -->
+            <div
+                style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem;">
+                <h3
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em; margin-bottom: 1rem;">
+                    ⚙️ TECH STACK</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(255,45,59,0.1); border: 1px solid rgba(255,45,59,0.2); color: var(--red);">HTML5</span>
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.2); color: var(--cyan);">CSS3</span>
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(255,209,102,0.1); border: 1px solid rgba(255,209,102,0.2); color: var(--yellow);">JS</span>
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.2); color: var(--green);">LEAFLET</span>
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(179,136,255,0.1); border: 1px solid rgba(179,136,255,0.2); color: var(--purple);">CHART.JS</span>
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.2); color: var(--cyan);">JITSI</span>
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.2); color: var(--cyan);">TAILWIND</span>
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; padding: 0.2rem 0.6rem; border-radius: 99px; background: rgba(0,255,157,0.1); border: 1px solid rgba(0,255,157,0.2); color: var(--green);">OSM</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="margin-top: 5rem; border-top: 1px solid var(--border); padding: 3rem 5%; text-align: center;">
+        <div class="logo">⚕ SmartCare</div>
+        <p style="color: var(--muted); font-size: 0.8rem; margin-top: 1rem;">NeuroTech · Taniya & Nilesh · Emergency
+            Response Platform</p>
+    </footer>
+
+    <!-- CHART.JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script>
+        // ─── DATE DISPLAY ───
+        document.getElementById('currentDate').textContent = '📅 ' + new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        // ─── KPI COUNTER ANIMATION ───
+        function animateCounter(el, target, duration = 1500) {
+            const start = performance.now();
+            const isFloat = !Number.isInteger(target);
+            const update = (now) => {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const value = eased * target;
+                el.textContent = isFloat ? value.toFixed(1) : Math.round(value).toLocaleString('en-IN');
+                if (progress < 1) requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+        }
+
+        const kpiObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const el = entry.target;
+                    const target = parseFloat(el.dataset.target);
+                    animateCounter(el, target);
+                    kpiObserver.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('[data-target]').forEach(el => kpiObserver.observe(el));
+
+        // ─── LOCATION BARS ANIMATION ───
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.location-bar-fill').forEach(el => {
+                    el.style.width = el.dataset.width;
+                });
+            }, 300);
+        });
+
+        // ─── CHARTS INIT ───
+        const commonScales = {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7a8aaa', font: { size: 10 } }, border: { color: 'rgba(255,255,255,0.07)' } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#7a8aaa', font: { size: 10 } }, border: { color: 'rgba(255,255,255,0.07)' } }
+        };
+
+        // Line Chart
+        new Chart(document.getElementById('lineChart'), {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Response Time (min)',
+                    data: [8.2, 6.1, 5.4, 4.8, 4.2, 3.8, 3.2],
+                    borderColor: '#ff2d3b',
+                    backgroundColor: 'rgba(255,45,59,0.08)',
+                    borderWidth: 2.5,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#ff2d3b'
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: commonScales
+            }
+        });
+
+        // Doughnut Chart
+        new Chart(document.getElementById('doughnutChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Ambulance', 'Telemedicine', 'Drone'],
+                datasets: [{
+                    data: [45, 30, 25],
+                    backgroundColor: ['rgba(255,45,59,0.8)', 'rgba(0,229,255,0.8)', 'rgba(0,255,157,0.8)'],
+                    borderColor: ['#ff2d3b', '#00e5ff', '#00ff9d'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Bar Chart
+        new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    data: [23, 31, 18, 42, 29, 38, 25],
+                    backgroundColor: ['#00e5ff', '#00e5ff', '#00e5ff', '#ff2d3b', '#00e5ff', '#00e5ff', '#00e5ff'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#7a8aaa', font: { size: 10 } } },
+                    y: commonScales.y
+                }
+            }
+        });
+
+        // ─── LIVE FEED ───
+        const locations = ['Sector 7, Delhi', 'Rohini', 'Noida', 'Gurgaon', 'Dwarka', 'Lajpat Nagar', 'Connaught Place', 'Karol Bagh'];
+        const cargos = ['Medicines', 'AED Device', 'Emergency Kit'];
+
+        function addFeedEntry(color, msg, prepend = true) {
+            const feed = document.getElementById('liveFeed');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const div = document.createElement('div');
+            div.style.cssText = `display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.04); animation:logFlash 0.5s ease;`;
+            div.innerHTML = `<div style="width:7px;height:7px;border-radius:50%; background:${color}; box-shadow:0 0 5px ${color}"></div><div style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:#7a8aaa; min-width:65px;">${time}</div><div style="font-size:0.75rem; color:#f0f4ff;">${msg}</div>`;
+            if (prepend) feed.prepend(div); else feed.appendChild(div);
+            if (feed.children.length > 15) feed.removeChild(feed.lastChild);
+        }
+
+        // Initial logs
+        const initLogs = [
+            { c: '#ff2d3b', m: '🚨 Emergency activated — Sector 7, Delhi' },
+            { c: '#00e5ff', m: '🚑 Ambulance AMB-12 dispatched — ETA 3:20' },
+            { c: '#00ff9d', m: '✅ Case #1247 resolved — Response: 3.8 min' },
+            { c: '#ffd166', m: '🚁 Drone DRN-7 returning to base' },
+            { c: '#00e5ff', m: '🩺 Telemedicine session ended — Dr. Sharma' }
+        ];
+        initLogs.forEach(l => addFeedEntry(l.c, l.m, false));
+
+        setInterval(() => {
+            const pool = [
+                { c: '#ff2d3b', m: `🚨 Emergency activated — ${locations[Math.floor(Math.random() * locations.length)]}` },
+                { c: '#00e5ff', m: `🚑 Ambulance dispatched — ETA ${(1 + Math.random() * 5).toFixed(1)}m` },
+                { c: '#00ff9d', m: `✅ Case #${1200 + Math.floor(Math.random() * 100)} resolved` },
+                { c: '#ffd166', m: `🚁 Drone deployed — ${cargos[Math.floor(Math.random() * cargos.length)]}` }
+            ];
+            const e = pool[Math.floor(Math.random() * pool.length)];
+            addFeedEntry(e.c, e.m);
+        }, 6000);
+
+        // ─── CASES TABLE ───
+        const cases = [
+            { id: '#1247', time: '10:42', type: 'Cardiac', location: 'Sector 7, Delhi', resp: '3.8 min', status: 'RESOLVED' },
+            { id: '#1246', time: '10:39', type: 'Accident', location: 'Rohini, Delhi', resp: '4.1 min', status: 'RESOLVED' },
+            { id: '#1245', time: '10:35', type: 'Fire', location: 'Noida Sec 18', resp: '5.2 min', status: 'RESOLVED' },
+            { id: '#1242', time: '10:02', type: 'Accident', location: 'NH-8 Highway', resp: '—', status: 'IN PROGRESS' },
+            { id: '#1239', time: '09:30', type: 'Accident', location: 'Connaught Place', resp: '—', status: 'CRITICAL' },
+            { id: '#1238', time: '09:18', type: 'Cardiac', location: 'Mayur Vihar', resp: '3.6 min', status: 'RESOLVED' }
+        ];
+
+        function renderTable(filter = 'all', search = '') {
+            const body = document.getElementById('caseBody');
+            body.innerHTML = '';
+
+            const filtered = cases.filter(c => {
+                const matchesType = filter === 'all' ||
+                    (filter === 'resolved' && c.status === 'RESOLVED') ||
+                    (filter === 'progress' && c.status === 'IN PROGRESS') ||
+                    (filter === 'critical' && c.status === 'CRITICAL');
+                const matchesSearch = !search || c.location.toLowerCase().includes(search.toLowerCase()) || c.id.includes(search);
+                return matchesType && matchesSearch;
+            });
+
+            filtered.forEach(c => {
+                const typeColor = c.type === 'Cardiac' ? 'var(--red)' : c.type === 'Accident' ? 'var(--yellow)' : 'orange';
+                const stBadge = c.status === 'RESOLVED' ? 'green' : c.status === 'CRITICAL' ? 'red' : 'yellow';
+                const pulseClass = c.status === 'CRITICAL' ? 'badge-critical' : '';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+          <td style="font-family:'JetBrains Mono',monospace; color:var(--cyan); font-weight:700;">${c.id}</td>
+          <td style="color:var(--muted);">${c.time}</td>
+          <td><span style="font-size:0.65rem; padding:0.2rem 0.6rem; border-radius:99px; background:${typeColor}22; border:1px solid ${typeColor}66; color:${typeColor}; font-weight:600;">${c.type}</span></td>
+          <td>${c.location}</td>
+          <td style="font-family:'JetBrains Mono',monospace; color:${c.resp === '—' ? 'var(--muted)' : 'var(--green)'};">${c.resp}</td>
+          <td><span class="${pulseClass}" style="font-size:0.65rem; padding:0.25rem 0.7rem; border-radius:99px; background:var(--${stBadge})11; border:1px solid var(--${stBadge})33; color:var(--${stBadge});">${c.status}</span></td>
+          <td><button onclick="toast('Viewing ${c.id}', 'info')" style="padding:0.3rem 0.65rem; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:6px; font-size:0.75rem;">👁️ View</button></td>
+        `;
+                body.appendChild(row);
+            });
+        }
+
+        function filterCases(type) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter) {
+                    const active = btn.dataset.filter === type;
+                    btn.style.background = active ? 'var(--red)' : 'transparent';
+                    btn.style.color = active ? 'white' : 'var(--muted)';
+                    btn.style.borderColor = active ? 'var(--red)' : 'var(--border)';
+                }
+            });
+            renderTable(type, document.getElementById('caseSearch').value);
+        }
+
+        document.getElementById('caseSearch').addEventListener('input', (e) => {
+            const activeBtn = Array.from(document.querySelectorAll('.filter-btn')).find(b => b.style.background.includes('var(--red)'));
+            renderTable(activeBtn ? activeBtn.dataset.filter : 'all', e.target.value);
+        });
+
+        // ─── EXPORT ───
+        function exportReport() {
+            const text = `SmartCare Impact Report\nDate: ${new Date().toLocaleDateString()}\nKPIs: 1,247 Emergencies | 3.2m Response | 3,841 Saved\nTop Locations: Delhi NCR (312), Mumbai (198)\nPlatform Uptime: 99.7%`;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `SmartCare-Impact-${Date.now()}.txt`;
+            a.click();
+            if (window.toast) toast('Report exported to .txt', 'success');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => renderTable());
+
+    </script>
+</body>
+
+</html>

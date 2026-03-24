@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telemedicine — SmartCare</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/css/shared.css">
+    <script defer src="./assets/js/shared.js"></script>
+    <script defer src="./assets/js/telemedicine.js"></script>
+
+    <style>
+        body {
+            padding-top: 70px;
+            min-height: 100vh;
+            background: var(--bg);
+        }
+
+        /* PRE-CALL SCREEN */
+        #preCallScreen {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .doctor-card {
+            background: var(--surface);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .doctor-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a3a6b, #0d2040);
+            border: 2px solid var(--cyan);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .room-input {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.9rem 1.25rem;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .room-input:focus {
+            border-color: var(--cyan);
+        }
+
+        .contact-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.85rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .contact-card:hover {
+            border-color: var(--cyan);
+            transform: translateY(-2px);
+        }
+
+        /* IN-CALL SCREEN */
+        #inCallScreen {
+            display: none;
+            grid-template-columns: 1fr 380px;
+            height: calc(100vh - 70px);
+            gap: 0;
+        }
+
+        .video-column {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #000;
+        }
+
+        .call-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        #jitsiFrame {
+            flex: 1;
+            width: 100%;
+            border: none;
+        }
+
+        .call-controls {
+            height: 80px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            z-index: 10;
+        }
+
+        .control-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            border-color: var(--cyan);
+            transform: scale(1.08);
+        }
+
+        .end-call-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--red);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(255, 45, 59, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .end-call-btn:hover {
+            transform: scale(1.12);
+            box-shadow: 0 0 35px rgba(255, 45, 59, 0.6);
+        }
+
+        .vitals-column {
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .vitals-card {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .vitals-card:hover {
+            background: var(--card);
+        }
+
+        .vitals-value {
+            font-family: 'Bebas Neue', sans-serif;
+            line-height: 1;
+            transition: color 0.5s ease;
+        }
+
+        /* Waveform Animation */
+        .waveform {
+            position: relative;
+            height: 50px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+            border-radius: 4px;
+            background: rgba(255, 45, 59, 0.03);
+        }
+
+        .wave-line {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 50'%3E%3Cpath d='M0,25 L30,25 L35,5 L40,45 L45,25 L80,25 L85,5 L90,45 L95,25 L130,25 L135,5 L140,45 L145,25 L200,25' stroke='%23ff2d3b' stroke-width='2' fill='none'/%3E%3C/svg%3E") repeat-x center;
+            background-size: 200px 50px;
+            animation: waveScroll 1.5s linear infinite;
+        }
+
+        @keyframes waveScroll {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 900px) {
+            #inCallScreen {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60vh 1fr;
+                overflow-y: auto;
+            }
+
+            .vitals-column {
+                border-left: none;
+                border-top: 1px solid var(--border);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">⚕ SmartCare</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="map.html">Live Map</a>
+            <a href="telemedicine.html" class="active">Telemedicine</a>
+            <a href="drone.html">Drone</a>
+            <a href="verify.html">Verify</a>
+            <a href="admin.html">Admin</a>
+            <button onclick="themeToggle()" id="themeToggle"
+                style="color: var(--red); cursor: pointer; border: none; background: none; font-size: 1.2rem;">🌓</button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- PRE-CALL SETUP SCREEN -->
+        <section id="preCallScreen">
+            <div class="badge badge-red" style="padding: 0.4rem 1rem; font-size: 0.75rem; margin-bottom: 1.5rem;">🩺
+                TELEMEDICINE PORTAL</div>
+            <h1
+                style="font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; line-height: 1.1; margin-bottom: 2rem;">
+                Connect With a Doctor <br><span style="color: var(--red);">Instantly</span></h1>
+
+            <div class="doctor-card">
+                <div class="doctor-avatar">🩺</div>
+                <div>
+                    <h3 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 0.2rem;">Dr. Priya Sharma</h3>
+                    <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 0.5rem;">Emergency Medicine ·
+                        AIIMS Delhi</p>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
+                        <span
+                            style="width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite;"></span>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--green); font-weight: 600;">AVAILABLE
+                            NOW</span>
+                    </div>
+                    <p style="font-size: 0.65rem; color: var(--muted);">⭐ 4.9 · 2,847 consultations</p>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 2rem;">
+                <label for="roomInput"
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">ROOM
+                    ID</p>
+                    <input type="text" id="roomInput" class="room-input" placeholder="e.g. SmartCare-Emergency-2847">
+                    <p style="font-size: 0.7rem; color: var(--muted); margin-top: 0.5rem;">💡 Share this room ID with
+                        your doctor to join the same call</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                <button onclick="quickConnect()" class="btn-primary"
+                    style="background: var(--cyan); color: #04060f; width: 100%; justify-content: center; font-size: 1rem; padding: 1rem;">⚡
+                    Quick Connect — Auto Room</button>
+                <button onclick="startCall()" class="btn-secondary"
+                    style="width: 100%; justify-content: center; font-size: 1rem; padding: 1rem;">🎥 Join with Room
+                    ID</button>
+            </div>
+
+            <div
+                style="background: rgba(0,255,157,0.05); border: 1px solid rgba(0,255,157,0.15); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 3rem;">
+                <p style="font-size: 0.75rem; color: var(--muted);">🔒 End-to-end encrypted · No account required ·
+                    Powered by Jitsi Meet</p>
+            </div>
+
+            <div>
+                <p
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase; margin-bottom: 1rem;">
+                    EMERGENCY CONTACTS</p>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                    <div onclick="toast('Calling Ambulance...', 'info')" class="contact-card">
+                        <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">🚑</span>
+                        <p style="font-weight: 700; font-size: 0.8rem;">Ambulance</p>
+                        <p style="font-size: 0.65rem; color: var(--muted); margin-bottom: 0.5rem;">AMB-7</p>
+                        <span style="font-size: 0.65rem; color: var(--cyan); font-weight: 600;">Call</span>
+                    </div>
+                    <div onclick="toast('Calling Hospital...', 'info')" class="contact-card">
+                        <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">🏥</span>
+                        <p style="font-weight: 700; font-size: 0.8rem;">Hospital</p>
+                        <p style="font-size: 0.65rem; color: var(--muted); margin-bottom: 0.5rem;">City ER</p>
+                        <span style="font-size: 0.65rem; color: var(--cyan); font-weight: 600;">Call</span>
+                    </div>
+                    <div onclick="toast('Calling Family...', 'info')" class="contact-card">
+                        <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">👨‍👩‍👧</span>
+                        <p style="font-weight: 700; font-size: 0.8rem;">Family</p>
+                        <p style="font-size: 0.65rem; color: var(--muted); margin-bottom: 0.5rem;">Verified</p>
+                        <span style="font-size: 0.65rem; color: var(--green); font-weight: 600;">Call</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- IN-CALL SCREEN -->
+        <section id="inCallScreen">
+            <!-- Video Column -->
+            <div class="video-column">
+                <div class="call-header">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span
+                                style="width: 8px; height: 8px; border-radius: 50%; background: var(--red); animation: pulse 1s infinite;"></span>
+                            <span
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--red); font-weight: 700;">LIVE</span>
+                        </div>
+                        <span id="callRoomName"
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted);">Room:
+                            SmartCare-Emergency</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <div id="callDuration"
+                            style="font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--cyan); line-height: 1;">
+                            00:00</div>
+                        <div
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; color: var(--muted); letter-spacing: 0.1em;">
+                            CALL DURATION</div>
+                    </div>
+                    <div class="badge badge-green"
+                        style="font-size: 0.55rem; padding: 0.2rem 0.5rem; background: rgba(0, 255, 157, 0.05);">🔒
+                        Encrypted</div>
+                </div>
+
+                <iframe id="jitsiFrame" allow="camera; microphone; display-capture; autoplay; fullscreen"></iframe>
+
+                <div class="call-controls">
+                    <button id="muteBtn" onclick="toggleMute()" class="control-btn">🎤</button>
+                    <button id="videoBtn" onclick="toggleVideo()" class="control-btn">📹</button>
+                    <button onclick="toast('Screen sharing available in Jitsi controls', 'info')"
+                        class="control-btn">🖥️</button>
+                    <button onclick="toast('Use Jitsi\'s built-in chat', 'info')" class="control-btn">💬</button>
+                    <button onclick="endCall()" class="end-call-btn">📞</button>
+                </div>
+            </div>
+
+            <!-- Vitals Column -->
+            <div class="vitals-column">
+                <div
+                    style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.05em;">💓
+                        PATIENT VITALS</h2>
+                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                        <span
+                            style="width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite;"></span>
+                        <span
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; color: var(--green); letter-spacing: 0.05em;">MONITORING
+                            ACTIVE</span>
+                    </div>
+                </div>
+
+                <!-- Heart Rate -->
+                <div class="vitals-card">
+                    <p
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase;">
+                        HEART RATE</p>
+                    <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                        <span id="heartRateValue" class="vitals-value"
+                            style="font-size: 4.5rem; color: var(--red);">72</span>
+                        <span style="font-size: 0.8rem; color: var(--muted); font-weight: 500;">BPM</span>
+                    </div>
+                    <span id="hrStatus" class="badge badge-green">NORMAL</span>
+                    <div class="waveform">
+                        <div class="wave-line"></div>
+                    </div>
+                </div>
+
+                <!-- SpO2 -->
+                <div class="vitals-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <p
+                                style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase;">
+                                BLOOD OXYGEN (SPO2)</p>
+                            <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.5rem;">
+                                <span id="spo2Value" class="vitals-value"
+                                    style="font-size: 3.5rem; color: var(--cyan);">98</span>
+                                <span style="font-size: 0.8rem; color: var(--muted); font-weight: 500;">%</span>
+                            </div>
+                            <span id="spo2Status" class="badge badge-green">NORMAL</span>
+                        </div>
+                        <svg width="80" height="80" viewBox="0 0 80 80">
+                            <circle cx="40" cy="40" r="32" fill="none" stroke="rgba(0,229,255,0.1)" stroke-width="6" />
+                            <circle id="spo2Ring" cx="40" cy="40" r="32" fill="none" stroke="#00e5ff" stroke-width="6"
+                                stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="4"
+                                transform="rotate(-90 40 40)" style="transition: stroke-dashoffset 0.8s ease;" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Blood Pressure -->
+                <div class="vitals-card">
+                    <p
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase;">
+                        BLOOD PRESSURE</p>
+                    <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.5rem;">
+                        <span id="bpSystolic" class="vitals-value"
+                            style="font-size: 2.5rem; color: var(--yellow);">120</span>
+                        <span
+                            style="font-size: 1.5rem; color: var(--muted); font-family: 'Bebas Neue', sans-serif;">/</span>
+                        <span id="bpDiastolic" class="vitals-value"
+                            style="font-size: 2.5rem; color: var(--yellow);">80</span>
+                    </div>
+                    <p style="font-size: 0.6rem; color: var(--muted); margin-bottom: 0.75rem;">mmHg</p>
+                    <span id="bpStatus" class="badge badge-green">NORMAL</span>
+                </div>
+
+                <!-- Temperature -->
+                <div class="vitals-card">
+                    <p
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase;">
+                        BODY TEMPERATURE</p>
+                    <div style="display: flex; align-items: baseline; gap: 0.4rem; margin-top: 0.5rem;">
+                        <span id="tempValue" class="vitals-value"
+                            style="font-size: 3rem; color: var(--green);">36.8</span>
+                        <span
+                            style="font-size: 1.5rem; color: var(--muted); font-family: 'Bebas Neue', sans-serif;">°C</span>
+                    </div>
+                    <span id="tempStatus" class="badge badge-green">NORMAL</span>
+                </div>
+
+                <!-- Vitals Summary -->
+                <div
+                    style="padding: 1.5rem; background: rgba(0, 255, 157, 0.04); border-top: 1px solid rgba(0, 255, 157, 0.1); margin-top: auto;">
+                    <p
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+                        OVERALL STATUS</p>
+                    <p id="overallStatus"
+                        style="font-family: 'Bebas Neue', sans-serif; font-size: 2.22rem; color: var(--green); line-height: 1;">
+                        STABLE</p>
+                    <p id="lastUpdated" style="font-size: 0.65rem; color: var(--muted); margin-top: 0.5rem;">Updated
+                        just now</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="margin-top: 5rem; border-top: 1px solid var(--border); padding: 3rem 5%; text-align: center;">
+        <div class="logo">⚕ SmartCare</div>
+        <p style="color: var(--muted); font-size: 0.8rem; margin-top: 1rem;">SmartCare · Built for Life</p>
+    </footer>
+
+</body>
+
+</html>

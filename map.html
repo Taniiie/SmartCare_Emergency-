@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Tracking — SmartCare</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="./assets/css/shared.css">
+    <script defer src="./assets/js/shared.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #04060f;
+        }
+
+        #map {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* Floating Panels */
+        .floating-panel {
+            position: fixed;
+            z-index: 500;
+            background: rgba(11, 15, 30, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            color: var(--text);
+        }
+
+        #leftPanel {
+            left: 1.25rem;
+            top: 80px;
+            width: 300px;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+
+        #rightPanel {
+            right: 1.25rem;
+            top: 80px;
+            width: 260px;
+        }
+
+        /* Components in Panels */
+        .panel-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1rem 0;
+        }
+
+        .unit-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .unit-card h4 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .panel-eta {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 1s linear;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 0.4rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-btn.active {
+            color: white;
+            border-color: transparent;
+        }
+
+        .control-btn.active.amb {
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red-glow);
+        }
+
+        .control-btn.active.drone {
+            background: var(--green);
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+        }
+
+        .control-btn.active.patient {
+            background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan-glow);
+        }
+
+        /* Bottom Status Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            z-index: 500;
+            background: rgba(11, 15, 30, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            gap: 2rem;
+        }
+
+        .status-pill {
+            font-size: 0.65rem;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .pill-green {
+            background: rgba(0, 255, 157, 0.1);
+            color: var(--green);
+        }
+
+        .pill-red {
+            background: rgba(255, 45, 59, 0.1);
+            color: var(--red);
+        }
+
+        /* Leaflet Overrides */
+        .leaflet-popup-content-wrapper {
+            background: #0b0f1e;
+            color: #f0f4ff;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .leaflet-popup-tip {
+            background: #0b0f1e;
+        }
+
+        .leaflet-popup-close-button {
+            color: #7a8aaa !important;
+        }
+
+        .leaflet-container {
+            background: #04060f;
+        }
+
+        /* Animations */
+        @keyframes markerPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 6px rgba(255, 45, 59, 0.2), 0 0 20px 8px rgba(255, 45, 59, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 12px rgba(255, 45, 59, 0.1), 0 0 30px 12px rgba(255, 45, 59, 0.3);
+            }
+        }
+
+        @keyframes droneBob {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #leftPanel {
+                left: 0;
+                right: 0;
+                bottom: 52px;
+                top: auto;
+                width: 100%;
+                border-radius: 16px 16px 0 0;
+                max-height: 40vh;
+            }
+
+            #rightPanel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">⚕ SmartCare</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="map.html" class="active">Live Map</a>
+            <a href="telemedicine.html">Telemedicine</a>
+            <a href="drone.html">Drone</a>
+            <a href="verify.html">Verify</a>
+            <a href="admin.html">Admin</a>
+            <button onclick="themeToggle()" id="themeToggle"
+                style="color: var(--red); cursor: pointer; border: none; background: none; font-size: 1.2rem;">🌓</button>
+        </div>
+    </nav>
+
+    <div id="map"></div>
+
+    <!-- Left Panel -->
+    <div id="leftPanel" class="floating-panel">
+        <div>
+            <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.05em;">📡 LIVE
+                TRACKING</h2>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+                <span
+                    style="width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite;"></span>
+                <span
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--green); letter-spacing: 0.1em;">ALL
+                    UNITS ACTIVE</span>
+            </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <!-- Patient -->
+        <div style="margin-bottom: 1.5rem;">
+            <p
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--red); letter-spacing: 0.1em;">
+                PATIENT</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <h3 style="font-size: 1rem; font-weight: 600;">Emergency Patient</h3>
+                <span style="font-size: 0.65rem; color: var(--red); font-weight: 700; animation: pulse 1s infinite;">●
+                    SOS ACTIVE</span>
+            </div>
+            <p id="patientCoords"
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--muted); margin-top: 0.4rem;">
+                28.6139°N, 77.2090°E</p>
+        </div>
+
+        <!-- Units -->
+        <div class="unit-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h4>🚑 AMBULANCE</h4>
+                <span class="badge badge-red" style="font-size: 0.55rem;">EN ROUTE</span>
+            </div>
+            <div id="panelAmbETA" class="panel-eta" style="color: var(--red); margin: 0.4rem 0;">04:32</div>
+            <p
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase;">
+                ETA TO ARRIVAL</p>
+            <div class="progress-track">
+                <div id="panelAmbProgress" class="progress-fill" style="background: var(--red);"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.8rem;">
+                <span style="font-size: 0.65rem; color: var(--muted);">Unit AMB-7 · Rajesh K.</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--cyan);">42
+                    km/h</span>
+            </div>
+        </div>
+
+        <div class="unit-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h4>🩺 DOCTOR</h4>
+                <span class="badge badge-green" style="font-size: 0.55rem; animation: pulse 2.5s infinite;">●
+                    LIVE</span>
+            </div>
+            <div id="docDuration" class="panel-eta" style="color: var(--cyan); margin: 0.4rem 0;">03:14</div>
+            <p
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase;">
+                CALL DURATION</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.8rem;">
+                <span style="font-size: 0.65rem; color: var(--muted);">Dr. Priya Sharma</span>
+                <a href="telemedicine.html"
+                    style="font-size: 0.65rem; color: var(--cyan); text-decoration: none; border: 1px solid var(--cyan); padding: 0.2rem 0.5rem; border-radius: 4px;">Open
+                    Call</a>
+            </div>
+        </div>
+
+        <div class="unit-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <h4>🚁 DRONE</h4>
+                <span class="badge badge-green" style="font-size: 0.55rem;">IN FLIGHT</span>
+            </div>
+            <div id="panelDroneETA" class="panel-eta" style="color: var(--green); margin: 0.4rem 0;">03:00</div>
+            <p
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase;">
+                ETA TO DROP ZONE</p>
+            <div class="progress-track">
+                <div id="panelDroneProgress" class="progress-fill" style="background: var(--green);"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 0.8rem;">
+                <span style="font-size: 0.65rem; color: var(--muted);">DRN-3 · AED Device</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--cyan);">85m
+                    Alt</span>
+            </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <p
+            style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.75rem;">
+            MAP CONTROLS</p>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+            <button onclick="toggleMarker('ambulance', this)" class="control-btn active amb">🚑 Amb</button>
+            <button onclick="toggleMarker('drone', this)" class="control-btn active drone">🚁 Drone</button>
+            <button onclick="toggleMarker('patient', this)" class="control-btn active patient">📍 Patient</button>
+        </div>
+        <button onclick="refreshLocation()" class="btn-secondary"
+            style="width: 100%; font-size: 0.75rem; padding: 0.6rem;">🔄 Refresh Location</button>
+
+        <div class="panel-divider"></div>
+
+        <p
+            style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.75rem;">
+            MAP LEGEND</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.7rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: var(--red);">🔴</span>
+                Patient</div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: #4a9eff;">🔵</span>
+                Ambulance</div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: var(--green);">🟢</span>
+                Hospital</div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;"><span style="color: var(--cyan);">🟡</span>
+                Drone</div>
+        </div>
+    </div>
+
+    <!-- Right Panel (Stats) -->
+    <div id="rightPanel" class="floating-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em;">⚡ RESPONSE
+                STATUS</h2>
+            <button
+                onclick="this.parentElement.nextElementSibling.style.display = this.parentElement.nextElementSibling.style.display === 'none' ? 'block' : 'none'"
+                style="background: none; border: none; color: var(--muted); font-size: 0.6rem; cursor: pointer; text-transform: uppercase; border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px;">▲
+                Toggle</button>
+        </div>
+
+        <div id="rightPanelBody">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div id="responseTime"
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--red); line-height: 1;">
+                    03:47</div>
+                <div
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em; margin-top: 0.25rem;">
+                    RESPONSE TIME</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <div
+                    style="background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <p style="font-size: 0.5rem; color: var(--muted);">AMB SPEED</p>
+                    <p style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--cyan);">42 km/h</p>
+                </div>
+                <div
+                    style="background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <p style="font-size: 0.5rem; color: var(--muted);">DISTANCE</p>
+                    <p style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--yellow);">2.4 km
+                    </p>
+                </div>
+                <div
+                    style="background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <p style="font-size: 0.5rem; color: var(--muted);">DRONE ALT</p>
+                    <p style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--green);">85 m</p>
+                </div>
+                <div
+                    style="background: rgba(255,255,255,0.02); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <p style="font-size: 0.5rem; color: var(--muted);">SIGNAL</p>
+                    <p style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--green);">STRONG</p>
+                </div>
+            </div>
+
+            <p
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.75rem;">
+                ALERT FEED</p>
+            <div id="alertFeed" style="display: flex; flex-direction: column; gap: 0.6rem;">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--red);">⚕ SmartCare Live
+            Tracking</div>
+
+        <div style="flex: 1; display: flex; gap: 0.5rem; justify-content: center; overflow-x: auto;">
+            <div class="status-pill pill-green"><span>●</span> GPS Lock</div>
+            <div class="status-pill pill-green"><span>●</span> Network OK</div>
+            <div class="status-pill pill-red"><span>●</span> SOS Active</div>
+            <div class="status-pill pill-green"><span>●</span> AMB Online</div>
+            <div class="status-pill pill-green"><span>●</span> Drone Active</div>
+        </div>
+
+        <div id="mapClock" style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--cyan);">
+            00:00:00</div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Page Specific Logic -->
+    <script src="./assets/js/map.js"></script>
+
+    <script>
+        // Stats and Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('mapClock').textContent =
+                [now.getHours(), now.getMinutes(), now.getSeconds()]
+                    .map(n => String(n).padStart(2, '0')).join(':');
+        }, 1000);
+
+        // Response elapsed time (counts UP from 3:47)
+        let elapsed = 227; // 3:47 in seconds
+        setInterval(() => {
+            elapsed++;
+            const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            document.getElementById('responseTime').textContent = `${m}:${s}`;
+        }, 1000);
+
+        // Activity Log / Alert Feed (mirroring dash log)
+        const alertFeed = document.getElementById('alertFeed');
+        function addAlert(msg, color) {
+            const entry = document.createElement('div');
+            entry.style.cssText = `display:flex; align-items:flex-start; gap:0.5rem; font-size:0.65rem; color:var(--text); background:rgba(255,255,255,0.02); padding:0.4rem; border-radius:6px;`;
+            entry.innerHTML = `<span style="color:${color};">●</span><span>${msg}</span>`;
+            alertFeed.prepend(entry);
+            if (alertFeed.children.length > 5) alertFeed.lastElementChild.remove();
+        }
+
+        addAlert('Ambulance AMB-7 entering Sector 4', '#00e5ff');
+        addAlert('Drone DRN-3 cargo deployed to waypoint 2', '#00ff9d');
+        addAlert('SOS tracking active: Patient locked', '#ff2d3b');
+    </script>
+</body>
+
+</html>

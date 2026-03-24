@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — SmartCare</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/css/shared.css">
+    <script defer src="./assets/js/shared.js"></script>
+
+    <style>
+        /* Status Bar Styles */
+        .status-bar {
+            margin-top: 70px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .status-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .system-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .dot-pulse-green {
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green);
+            animation: dotPulseGreen 2s infinite;
+        }
+
+        .dot-pulse-red {
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red);
+            animation: dotPulseRed 1s infinite;
+        }
+
+        @keyframes dotPulseGreen {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes dotPulseRed {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        #liveClock {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            color: var(--cyan);
+            line-height: 1;
+        }
+
+        /* PRE-SOS SECTION */
+        #preSosSection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 120px);
+            gap: 2rem;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .warning-banner {
+            background: rgba(255, 45, 59, 0.08);
+            border: 1px solid rgba(255, 45, 59, 0.3);
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* GIANT SOS BUTTON */
+        .sos-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 400px;
+            height: 400px;
+        }
+
+        .outer-ring {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 45, 59, 0.3);
+            animation: pulse-ring 2s ease-out infinite;
+        }
+
+        .inner-ring {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 45, 59, 0.2);
+            animation: pulse-ring 2s ease-out infinite;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: scale(1.25);
+                opacity: 0;
+            }
+        }
+
+        #sosButton {
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ff4d57, #cc0011);
+            box-shadow:
+                0 0 0 8px rgba(255, 45, 59, 0.15),
+                0 0 60px 20px rgba(255, 45, 59, 0.4),
+                0 0 120px 40px rgba(255, 45, 59, 0.2),
+                inset 0 2px 0 rgba(255, 255, 255, 0.15);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+            z-index: 5;
+        }
+
+        #sosButton:hover {
+            transform: scale(1.05);
+            box-shadow:
+                0 0 0 12px rgba(255, 45, 59, 0.2),
+                0 0 80px 30px rgba(255, 45, 59, 0.5),
+                0 0 150px 60px rgba(255, 45, 59, 0.3);
+        }
+
+        #sosButton:active {
+            transform: scale(0.96);
+        }
+
+        /* POST-SOS SECTION */
+        #postSosSection {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: none;
+        }
+
+        .alert-header {
+            background: rgba(255, 45, 59, 0.12);
+            border: 1px solid rgba(255, 45, 59, 0.4);
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .response-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .status-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+        }
+
+        .eta-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            line-height: 1;
+            margin: 0.5rem 0;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 3px;
+            transition: width 1s linear;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 1rem 0 2rem;
+        }
+
+        .action-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .action-card.cyan:hover {
+            border-color: var(--cyan);
+            box-shadow: 0 0 15px var(--cyan-glow);
+        }
+
+        .action-card.green:hover {
+            border-color: var(--green);
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.15);
+        }
+
+        .action-card.purple:hover {
+            border-color: var(--purple);
+            box-shadow: 0 0 15px rgba(179, 136, 255, 0.15);
+        }
+
+        /* Activity Log */
+        #activityLog {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        #activityLog::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #activityLog::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        @keyframes logFlash {
+            0% {
+                background: rgba(255, 210, 0, 0.15);
+            }
+
+            100% {
+                background: transparent;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .response-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">⚕ SmartCare</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="map.html">Live Map</a>
+            <a href="telemedicine.html">Telemedicine</a>
+            <a href="drone.html">Drone</a>
+            <a href="verify.html">Verify</a>
+            <a href="admin.html">Admin</a>
+            <button onclick="themeToggle()" id="themeToggle"
+                style="color: var(--red); cursor: pointer; border: none; background: none; font-size: 1.2rem;">🌓</button>
+        </div>
+    </nav>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <div
+                style="display: flex; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--green);">
+                <span id="systemDot" class="system-dot dot-pulse-green"></span>
+                <span id="systemStatus">SYSTEM ARMED</span>
+            </div>
+        </div>
+        <div class="status-item" style="text-align: center;">
+            <div id="liveClock">00:00:00</div>
+            <div
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em;">
+                LOCAL TIME</div>
+        </div>
+        <div class="status-item" style="align-items: flex-end;">
+            <div id="locationBadge" class="badge-yellow">📍 LOCATING...</div>
+            <div id="locationCoords"
+                style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-top: 0.2rem;">
+                00.0000°N, 00.0000°E</div>
+        </div>
+    </div>
+
+    <main>
+        <!-- PRE-SOS STATE -->
+        <section id="preSosSection">
+            <div class="warning-banner">
+                <p
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--red); font-weight: 600;">
+                    ⚠️ FOR EMERGENCY USE ONLY</p>
+                <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--muted);">Pressing
+                    SOS will immediately alert all response units</p>
+            </div>
+
+            <div class="sos-container">
+                <div class="outer-ring"></div>
+                <div class="inner-ring"></div>
+                <button id="sosButton" onclick="activateSOS()">
+                    <span style="font-size: 2rem; margin-bottom: 0.5rem;">🆘</span>
+                    <span
+                        style="font-family: 'Bebas Neue', sans-serif; font-size: 5rem; color: white; line-height: 1;">SOS</span>
+                    <span
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.2em; color: rgba(255,255,255,0.7); margin-top: 0.5rem;">PRESS
+                        TO ACTIVATE</span>
+                </button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+                <p style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--muted);">SYSTEM
+                    READY</p>
+                <div style="display: flex; gap: 1rem;">
+                    <div class="badge badge-green"
+                        style="background: transparent; border: 1px solid rgba(0,255,157,0.3);"><span
+                            style="color: var(--green); margin-right: 0.3rem;">●</span> GPS Active</div>
+                    <div class="badge badge-green"
+                        style="background: transparent; border: 1px solid rgba(0,255,157,0.3);"><span
+                            style="color: var(--green); margin-right: 0.3rem;">●</span> Network OK</div>
+                    <div class="badge badge-green"
+                        style="background: transparent; border: 1px solid rgba(0,255,157,0.3);"><span
+                            style="color: var(--green); margin-right: 0.3rem;">●</span> Units On Standby</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- POST-SOS STATE -->
+        <section id="postSosSection">
+            <div class="alert-header">
+                <div>
+                    <h2
+                        style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--red); margin-bottom: 0.2rem;">
+                        🚨 EMERGENCY ACTIVATED</h2>
+                    <p style="color: var(--muted); font-size: 0.85rem;">Response units have been alerted and are en
+                        route.</p>
+                </div>
+                <div style="text-align: right; display: flex; gap: 2rem; align-items: center;">
+                    <div>
+                        <div
+                            style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em;">
+                            RESPONSE TIME</div>
+                        <div id="elapsedTime"
+                            style="font-family: 'Bebas Neue', sans-serif; font-size: 2.22rem; color: var(--cyan); line-height: 1;">
+                            00:00</div>
+                    </div>
+                    <button onclick="cancelSOS()" class="btn-secondary"
+                        style="font-size: 0.75rem; padding: 0.5rem 1rem; border-color: var(--muted); color: var(--muted);">✕
+                        Cancel Emergency</button>
+                </div>
+            </div>
+
+            <div class="response-grid">
+                <!-- AMBULANCE -->
+                <div class="status-card">
+                    <div class="card-top-bar" style="background: var(--red);"></div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <span style="font-size: 2.5rem;">🚑</span>
+                        <span id="ambStatus" class="badge badge-yellow">DISPATCHING...</span>
+                    </div>
+                    <h3 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem;">AMBULANCE</h3>
+                    <div id="ambETA" class="eta-display" style="color: var(--red);">04:32</div>
+                    <div
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em;">
+                        ETA TO ARRIVAL</div>
+                    <div class="progress-track">
+                        <div id="ambProgress" class="progress-fill" style="background: var(--red);"></div>
+                    </div>
+                    <p
+                        style="font-size: 0.65rem; color: var(--muted); margin-top: 1rem; font-family: 'JetBrains Mono', monospace;">
+                        Unit AMB-7 · Driver: Rajesh K.</p>
+                </div>
+
+                <!-- DOCTOR -->
+                <div class="status-card">
+                    <div class="card-top-bar" style="background: var(--cyan);"></div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <span style="font-size: 2.5rem;">🩺</span>
+                        <span id="docStatus" class="badge badge-yellow">CONNECTING...</span>
+                    </div>
+                    <h3 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem;">TELEMEDICINE</h3>
+                    <div id="videoReady"
+                        style="font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--cyan); margin: 0.8rem 0; display: none;">
+                        VIDEO READY</div>
+                    <div id="connectingText"
+                        style="margin: 1.2rem 0; color: var(--muted); font-size: 0.9rem; animation: dotPulseGreen 1.5s infinite;">
+                        Channel connecting...</div>
+                    <p style="font-size: 0.85rem; color: var(--text); font-weight: 500;">Dr. Priya Sharma</p>
+                    <p style="font-size: 0.75rem; color: var(--muted); margin-bottom: 1rem;">General Emergency
+                        Specialist</p>
+                    <a href="telemedicine.html" id="joinCallBtn" class="btn-primary"
+                        style="background: var(--cyan); box-shadow: 0 4px 15px var(--cyan-glow); font-size: 0.8rem; padding: 0.6rem 1.2rem; display: none; width: fit-content;">Join
+                        Call →</a>
+                    <p
+                        style="font-size: 0.65rem; color: var(--muted); margin-top: 1rem; font-family: 'JetBrains Mono', monospace;">
+                        Jitsi Secure Channel · Encrypted</p>
+                </div>
+
+                <!-- DRONE -->
+                <div class="status-card">
+                    <div class="card-top-bar" style="background: var(--green);"></div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                        <span style="font-size: 2.5rem;">🚁</span>
+                        <span id="droneStatus" class="badge badge-yellow">PREPARING...</span>
+                    </div>
+                    <h3 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem;">DRONE</h3>
+                    <div id="droneETA" class="eta-display" style="color: var(--green);">03:00</div>
+                    <div
+                        style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em;">
+                        ETA TO DROP ZONE</div>
+                    <div class="progress-track">
+                        <div id="droneProgress" class="progress-fill" style="background: var(--green);"></div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text); margin-top: 0.8rem; font-weight: 500;">📦
+                        Emergency Kit · AED Device</p>
+                    <p
+                        style="font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; font-family: 'JetBrains Mono', monospace;">
+                        Unit DRN-3 · Autonomous flight active</p>
+                </div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div style="margin-top: 3rem;">
+                <p class="section-tag" style="margin-bottom: 1rem;">QUICK ACTIONS</p>
+                <div class="actions-grid">
+                    <div onclick="window.location.href='map.html'" class="action-card cyan">
+                        <span style="font-size: 2rem;">🗺️</span>
+                        <div>
+                            <p style="font-weight: 700; font-size: 0.9rem;">VIEW LIVE MAP</p>
+                            <p style="color: var(--muted); font-size: 0.7rem;">Track assets in real time</p>
+                        </div>
+                    </div>
+                    <div onclick="window.location.href='telemedicine.html'" class="action-card cyan">
+                        <span style="font-size: 2rem;">🩺</span>
+                        <div>
+                            <p style="font-weight: 700; font-size: 0.9rem;">JOIN VIDEO CALL</p>
+                            <p style="color: var(--muted); font-size: 0.7rem;">Connect with Dr. Sharma</p>
+                        </div>
+                    </div>
+                    <div onclick="window.location.href='drone.html'" class="action-card green">
+                        <span style="font-size: 2rem;">🚁</span>
+                        <div>
+                            <p style="font-weight: 700; font-size: 0.9rem;">DRONE STATUS</p>
+                            <p style="color: var(--muted); font-size: 0.7rem;">Monitor cargo delivery</p>
+                        </div>
+                    </div>
+                    <div onclick="window.location.href='verify.html'" class="action-card purple">
+                        <span style="font-size: 2rem;">🔒</span>
+                        <div>
+                            <p style="font-weight: 700; font-size: 0.9rem;">VERIFY CONTACTS</p>
+                            <p style="color: var(--muted); font-size: 0.7rem;">Manage contact list</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIVITY LOG -->
+            <div style="margin-top: 2rem;">
+                <p class="section-tag" style="margin-bottom: 1rem;">ACTIVITY LOG</p>
+                <div id="activityLog">
+                    <!-- Entries populated via JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer style="margin-top: 5rem; border-top: 1px solid var(--border); padding: 3rem 5%; text-align: center;">
+        <div class="logo">⚕ SmartCare</div>
+        <p style="color: var(--muted); font-size: 0.8rem; margin-top: 1rem;">SmartCare · Built for Life</p>
+    </footer>
+
+    <script>
+        // 1. CLOCK
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                const clockEl = document.getElementById('liveClock');
+                if (clockEl) clockEl.textContent = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        // 2. GEOLOCATION
+        function initLocation() {
+            const badge = document.getElementById('locationBadge');
+            const coords = document.getElementById('locationCoords');
+            if (!badge || !coords) return;
+
+            badge.textContent = '📍 LOCATING...';
+            badge.className = 'badge-yellow';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        badge.textContent = '📍 LOCATION LOCKED';
+                        badge.className = 'badge-green';
+                        coords.textContent = `${pos.coords.latitude.toFixed(4)}°N, ${pos.coords.longitude.toFixed(4)}°E`;
+                    },
+                    () => {
+                        // Fallback
+                        badge.textContent = '📍 LOCATION LOCKED';
+                        badge.className = 'badge-green';
+                        coords.textContent = '28.6139°N, 77.2090°E';
+                    }
+                );
+            } else {
+                badge.textContent = '📍 LOCATION LOCKED';
+                badge.className = 'badge-green';
+                coords.textContent = '28.6139°N, 77.2090°E';
+            }
+        }
+
+        // 3. SOS ACTIVATE
+        let elapsedTimer, ambulanceTimer, droneTimer, elapsedSeconds = 0;
+
+        function activateSOS() {
+            // Transition sections
+            document.getElementById('preSosSection').style.display = 'none';
+            document.getElementById('postSosSection').style.display = 'block';
+
+            // Update system status bar
+            const dot = document.getElementById('systemDot');
+            const statusText = document.getElementById('systemStatus');
+            dot.className = 'system-dot dot-pulse-red';
+            statusText.textContent = 'EMERGENCY ACTIVE';
+            statusText.style.color = 'var(--red)';
+
+            // Flash page red briefly
+            document.body.style.backgroundColor = 'rgba(255,45,59,0.05)';
+            setTimeout(() => document.body.style.backgroundColor = '', 500);
+
+            // Start elapsed time counter
+            elapsedSeconds = 0;
+            elapsedTimer = setInterval(() => {
+                elapsedSeconds++;
+                const m = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+                const s = String(elapsedSeconds % 60).padStart(2, '0');
+                document.getElementById('elapsedTime').textContent = `${m}:${s}`;
+            }, 1000);
+
+            // Ambulance countdown: 272 seconds = 4:32
+            let ambSeconds = 272;
+            ambulanceTimer = setInterval(() => {
+                ambSeconds--;
+                if (ambSeconds <= 0) { clearInterval(ambulanceTimer); return; }
+                const m = String(Math.floor(ambSeconds / 60)).padStart(2, '0');
+                const s = String(ambSeconds % 60).padStart(2, '0');
+                document.getElementById('ambETA').textContent = `${m}:${s}`;
+                // Update progress bar
+                const pct = ((272 - ambSeconds) / 272) * 100;
+                document.getElementById('ambProgress').style.width = pct + '%';
+            }, 1000);
+
+            // Drone countdown: 180 seconds = 3:00
+            let droneSeconds = 180;
+            droneTimer = setInterval(() => {
+                droneSeconds--;
+                if (droneSeconds <= 0) { clearInterval(droneTimer); return; }
+                const m = String(Math.floor(droneSeconds / 60)).padStart(2, '0');
+                const s = String(droneSeconds % 60).padStart(2, '0');
+                document.getElementById('droneETA').textContent = `${m}:${s}`;
+                const pct = ((180 - droneSeconds) / 180) * 100;
+                document.getElementById('droneProgress').style.width = pct + '%';
+            }, 1000);
+
+            // Status badge transitions
+            setTimeout(() => {
+                const ambStatus = document.getElementById('ambStatus');
+                ambStatus.textContent = 'EN ROUTE';
+                ambStatus.className = 'badge-red';
+            }, 2000);
+
+            setTimeout(() => {
+                const docStatus = document.getElementById('docStatus');
+                docStatus.textContent = '● LIVE';
+                docStatus.className = 'badge-green';
+                document.getElementById('videoReady').style.display = 'block';
+                document.getElementById('joinCallBtn').style.display = 'flex';
+                document.getElementById('connectingText').style.display = 'none';
+            }, 3000);
+
+            setTimeout(() => {
+                const droneStatus = document.getElementById('droneStatus');
+                droneStatus.textContent = 'IN FLIGHT';
+                droneStatus.className = 'badge-green';
+            }, 4000);
+
+            // Activity log entries
+            const logs = [
+                { delay: 0, color: '#ff2d3b', msg: '🚨 SOS Activated — Emergency protocol initiated' },
+                { delay: 1000, color: '#ffd166', msg: '📍 Patient location locked: 28.6139°N, 77.2090°E' },
+                { delay: 2000, color: '#ffd166', msg: '📱 Verifying emergency contacts...' },
+                { delay: 3000, color: '#00ff9d', msg: '✅ 3 contacts verified successfully' },
+                { delay: 4000, color: '#00e5ff', msg: '🚑 Ambulance AMB-7 dispatched — ETA 4:32' },
+                { delay: 5000, color: '#00ff9d', msg: '📶 Priority network channel established' },
+                { delay: 6000, color: '#00e5ff', msg: '🩺 Connecting Dr. Priya Sharma...' },
+                { delay: 8000, color: '#00ff9d', msg: '✅ Telemedicine channel live' },
+                { delay: 10000, color: '#00ff9d', msg: '🚁 Drone DRN-3 deployed — ETA 3:00' },
+            ];
+
+            logs.forEach(({ delay, color, msg }) => {
+                setTimeout(() => addLogEntry(color, msg), delay);
+            });
+        }
+
+        // 4. ADD LOG ENTRY
+        function addLogEntry(color, message) {
+            const log = document.getElementById('activityLog');
+            const now = new Date();
+            const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+            const entry = document.createElement('div');
+            entry.style.cssText = `
+        display: flex; align-items: center; gap: 0.75rem;
+        padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+        animation: logFlash 0.6s ease;
+      `;
+            entry.innerHTML = `
+        <div style="width:8px;height:8px;border-radius:50%;
+                    background:${color};flex-shrink:0;
+                    box-shadow:0 0 6px ${color};"></div>
+        <div style="font-family:'JetBrains Mono',monospace;
+                    font-size:0.7rem;color:#7a8aaa;min-width:80px;">${time}</div>
+        <div style="font-size:0.83rem;color:#f0f4ff;">${message}</div>
+      `;
+            log.prepend(entry);
+        }
+
+        // 5. CANCEL SOS
+        function cancelSOS() {
+            clearInterval(elapsedTimer);
+            clearInterval(ambulanceTimer);
+            clearInterval(droneTimer);
+
+            document.getElementById('postSosSection').style.display = 'none';
+            document.getElementById('preSosSection').style.display = 'flex';
+            document.getElementById('activityLog').innerHTML = '';
+            document.getElementById('elapsedTime').textContent = '00:00';
+            document.getElementById('ambETA').textContent = '04:32';
+            document.getElementById('droneETA').textContent = '03:00';
+            document.getElementById('ambProgress').style.width = '0%';
+            document.getElementById('droneProgress').style.width = '0%';
+            document.getElementById('ambStatus').textContent = 'DISPATCHING...';
+            document.getElementById('ambStatus').className = 'badge-yellow';
+            document.getElementById('docStatus').textContent = 'CONNECTING...';
+            document.getElementById('docStatus').className = 'badge-yellow';
+            document.getElementById('droneStatus').textContent = 'PREPARING...';
+            document.getElementById('droneStatus').className = 'badge-yellow';
+            document.getElementById('videoReady').style.display = 'none';
+            document.getElementById('joinCallBtn').style.display = 'none';
+            document.getElementById('connectingText').style.display = 'block';
+
+            // Reset system status bar
+            const dot = document.getElementById('systemDot');
+            const statusText = document.getElementById('systemStatus');
+            dot.className = 'system-dot dot-pulse-green';
+            statusText.textContent = 'SYSTEM ARMED';
+            statusText.style.color = 'var(--green)';
+        }
+
+        // 6. ON PAGE LOAD
+        document.addEventListener('DOMContentLoaded', () => {
+            startClock();
+            initLocation();
+        });
+    </script>
+</body>
+
+</html>

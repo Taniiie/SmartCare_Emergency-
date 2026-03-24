@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verification — SmartCare</title>
+
+    <!-- FONTS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/css/shared.css">
+    <script defer src="./assets/js/shared.js"></script>
+
+    <style>
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+        }
+
+        .verify-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem;
+            padding-top: calc(70px + 2.5rem);
+        }
+
+        @media (max-width: 900px) {
+            .verify-layout {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+        }
+
+        /* Verification Interace */
+        .input-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .phone-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        select,
+        input {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--cyan);
+        }
+
+        /* Steps Panel */
+        #verificationPanel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-top: 1.25rem;
+            display: none;
+        }
+
+        .step-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            flex-shrink: 0;
+            transition: all 0.4s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .step-detail {
+            font-size: 0.8rem;
+            color: var(--muted);
+            transition: color 0.3s;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        #overallProgress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--red), var(--cyan));
+            border-radius: 3px;
+            transition: width 0.8s ease;
+        }
+
+        /* Result Card */
+        #resultCard {
+            margin-top: 1.25rem;
+            display: none;
+        }
+
+        /* Stats & Contacts */
+        .stat-mini {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .stat-mini-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            line-height: 1;
+        }
+
+        .stat-mini-label {
+            font-size: 0.7rem;
+            color: var(--muted);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.08em;
+            margin-top: 0.35rem;
+            text-transform: uppercase;
+        }
+
+        .contacts-list {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* Animations */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <a href="index.html" class="logo">⚕ SmartCare</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="map.html">Live Map</a>
+            <a href="telemedicine.html">Telemedicine</a>
+            <a href="drone.html">Drone</a>
+            <a href="verify.html" class="active">Verify</a>
+            <a href="admin.html">Admin</a>
+            <button onclick="themeToggle()" id="themeToggle"
+                style="color: var(--red); cursor: pointer; border: none; background: none; font-size: 1.2rem;">🌓</button>
+        </div>
+    </nav>
+
+    <main class="verify-layout">
+        <!-- LEFT: VERIFICATION INTERFACE -->
+        <section>
+            <div class="badge badge-red" style="font-size: 0.7rem; letter-spacing: 0.05em;">🔒 CONTACT VERIFICATION
+            </div>
+            <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: 3rem; line-height: 1.1; margin-top: 0.5rem;">
+                Verify Emergency<br><span style="color: var(--red);">Contacts</span></h1>
+            <p style="color: var(--muted); max-width: 420px; line-height: 1.6; margin-top: 1rem;">Authenticate phone
+                numbers before adding them to your emergency response chain.</p>
+
+            <div class="input-card">
+                <p class="label-mono"
+                    style="font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+                    PHONE NUMBER</p>
+                <div class="phone-row">
+                    <select id="countryCode" style="width: 100px;">
+                        <option value="+91">🇮🇳 +91</option>
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+61">🇦🇺 +61</option>
+                        <option value="+971">🇦🇪 +971</option>
+                    </select>
+                    <input type="tel" id="phoneInput" placeholder="98765 43210" style="flex: 1;" maxlength="15">
+                </div>
+                <button id="verifyBtn" onclick="startVerification()" class="btn-primary"
+                    style="width: 100%; margin-top: 1.25rem; padding: 0.9rem; background: var(--red); border: none; color: white; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 0.06em; cursor: pointer;">🔍
+                    VERIFY NUMBER</button>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.75rem;">
+                    <p style="font-size: 0.65rem; color: var(--muted);">💡 Try: 999-xxx-xxxx for FAILED result</p>
+                    <p style="font-size: 0.65rem; color: var(--muted);">Try: any other for VERIFIED</p>
+                </div>
+            </div>
+
+            <!-- VERIFICATION PANEL -->
+            <div id="verificationPanel">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em;">
+                        VERIFICATION IN PROGRESS</h2>
+                    <div id="verifyingSpinner"
+                        style="width: 16px; height: 16px; border: 2px solid var(--red); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;">
+                    </div>
+                </div>
+                <div class="progress-track">
+                    <div id="overallProgress"></div>
+                </div>
+
+                <div class="step-row" id="step1">
+                    <div class="step-icon" id="stepIcon1">1</div>
+                    <div class="step-content">
+                        <p class="step-title">Network Connection</p>
+                        <p class="step-detail" id="stepDetail1">Waiting...</p>
+                    </div>
+                </div>
+                <div class="step-row" id="step2">
+                    <div class="step-icon" id="stepIcon2">2</div>
+                    <div class="step-content">
+                        <p class="step-title">SIM Registration Check</p>
+                        <p class="step-detail" id="stepDetail2">Waiting...</p>
+                    </div>
+                </div>
+                <div class="step-row" id="step3">
+                    <div class="step-icon" id="stepIcon3">3</div>
+                    <div class="step-content">
+                        <p class="step-title">Fraud Score Analysis</p>
+                        <p class="step-detail" id="stepDetail3">Waiting...</p>
+                    </div>
+                </div>
+                <div class="step-row" id="step4">
+                    <div class="step-icon" id="stepIcon4">4</div>
+                    <div class="step-content">
+                        <p class="step-title">Identity Authentication</p>
+                        <p class="step-detail" id="stepDetail4">Waiting...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULT CARD -->
+            <div id="resultCard"></div>
+        </section>
+
+        <!-- RIGHT: CONTACTS + STATS -->
+        <section>
+            <!-- Stats -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                <div class="stat-mini">
+                    <div class="stat-mini-num" id="totalCount" style="color: var(--green);">3</div>
+                    <div class="stat-mini-label">VERIFIED</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-num" id="failedCount" style="color: var(--red);">0</div>
+                    <div class="stat-mini-label">FAILED</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-num" id="successRate" style="color: var(--cyan);">100%</div>
+                    <div class="stat-mini-label">SUCCESS</div>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.05em;">EMERGENCY
+                    CONTACTS</h2>
+                <span id="contactCountBadge" class="badge badge-green"
+                    style="font-size: 0.65rem; padding: 0.2rem 0.6rem;">3 VERIFIED</span>
+            </div>
+
+            <div class="contacts-list" id="contactsList">
+                <!-- Rendered by JS -->
+            </div>
+
+            <div
+                style="background: rgba(0, 229, 255, 0.04); border: 1px solid rgba(0, 229, 255, 0.12); border-radius: 10px; padding: 1rem; margin-top: 1.5rem; text-align: center;">
+                <p style="font-size: 0.75rem; color: var(--muted); line-height: 1.4;">💡 Verify a phone number on the
+                    left to add it to your emergency contact list automatically.</p>
+            </div>
+
+            <!-- Security Info -->
+            <div
+                style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-top: 2rem;">
+                <h3
+                    style="font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.05em; margin-bottom: 1rem;">
+                    🛡️ HOW VERIFICATION WORKS</h3>
+                <ul style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <li
+                        style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.83rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); padding-bottom: 0.5rem;">
+                        <span>📡</span> Real-time carrier network lookup
+                    </li>
+                    <li
+                        style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.83rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); padding-bottom: 0.5rem;">
+                        <span>🤖</span> AI-powered fraud detection scoring
+                    </li>
+                    <li
+                        style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.83rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); padding-bottom: 0.5rem;">
+                        <span>🔒</span> End-to-end encrypted verification
+                    </li>
+                    <li
+                        style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted); font-size: 0.83rem;">
+                        <span>⚡</span> Results in under 5 seconds
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer style="margin-top: 5rem; border-top: 1px solid var(--border); padding: 3rem 5%; text-align: center;">
+        <div class="logo">⚕ SmartCare</div>
+        <p style="color: var(--muted); font-size: 0.8rem; margin-top: 1rem;">SmartCare · Built for Life</p>
+    </footer>
+
+    <script>
+        // CONTACTS DATA
+        let contacts = [
+            { id: 1, name: 'Priya Sharma', phone: '+91 98765 43210', relation: 'Sister', carrier: 'Airtel India', color: '#00e5ff' },
+            { id: 2, name: 'Raj Kumar', phone: '+91 87654 32109', relation: 'Father', carrier: 'Jio', color: '#00ff9d' },
+            { id: 3, name: 'City Emergency Hospital', phone: '+91 11 2345 6789', relation: 'Hospital', carrier: 'BSNL', color: '#ff2d3b' }
+        ];
+        let nextId = 4;
+        let verifiedCountTotal = 3;
+        let failedCountTotal = 0;
+        let currentPhone = '';
+
+        // RENDER CONTACTS
+        function renderContacts() {
+            const list = document.getElementById('contactsList');
+            list.innerHTML = '';
+
+            contacts.forEach(c => {
+                const avatar = c.name === 'City Emergency Hospital' ? '🏥' : c.name[0];
+                const div = document.createElement('div');
+                div.style.cssText = `
+          background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+          padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem;
+          transition: all 0.2s; cursor: default;
+        `;
+                div.id = `contact-${c.id}`;
+
+                div.innerHTML = `
+          <div style="width:44px; height:44px; border-radius:50%; flex-shrink:0; background:${c.color}22; border:1.5px solid ${c.color}; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${c.color};">${avatar}</div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.name}</div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--muted); margin-top:0.2rem;">${c.phone}</div>
+            <div style="display:flex; gap:0.4rem; margin-top:0.4rem; flex-wrap:wrap;">
+              <span style="font-size:0.6rem; padding:0.15rem 0.45rem; border-radius:99px; border:1px solid var(--border); color:var(--muted);">${c.relation}</span>
+              <span style="font-size:0.6rem; padding:0.15rem 0.45rem; border-radius:99px; border:1px solid var(--border); color:var(--muted);">${c.carrier}</span>
+              <span style="font-size:0.6rem; padding:0.15rem 0.45rem; border-radius:99px; border:1px solid rgba(0,255,157,0.3); color:var(--green); background:rgba(0,255,157,0.07);">✓ VERIFIED</span>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.4rem;">
+            <button onclick="toast('Calling ${c.name}...', 'info')" style="width:32px; height:32px; border-radius:8px; background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.2); color:var(--cyan); cursor:pointer;">📞</button>
+            <button onclick="removeContact(${c.id})" style="width:32px; height:32px; border-radius:8px; background:rgba(255,45,59,0.06); border:1px solid rgba(255,45,59,0.15); color:var(--red); cursor:pointer;">🗑️</button>
+          </div>
+        `;
+
+                div.onmouseenter = () => { div.style.borderColor = 'rgba(0,229,255,0.3)'; div.style.transform = 'translateY(-2px)'; };
+                div.onmouseleave = () => { div.style.borderColor = 'var(--border)'; div.style.transform = ''; };
+
+                list.appendChild(div);
+            });
+
+            document.getElementById('contactCountBadge').textContent = contacts.length + ' VERIFIED';
+            document.getElementById('totalCount').textContent = contacts.length;
+        }
+
+        // START VERIFICATION
+        function startVerification() {
+            const code = document.getElementById('countryCode').value;
+            const num = document.getElementById('phoneInput').value.replace(/\s+/g, '');
+
+            if (!num || num.length < 7) {
+                if (window.toast) toast('Enter a valid phone number', 'error');
+                document.getElementById('phoneInput').style.borderColor = 'var(--red)';
+                setTimeout(() => document.getElementById('phoneInput').style.borderColor = '', 2000);
+                return;
+            }
+
+            currentPhone = code + ' ' + num;
+            const isFailed = num.startsWith('999');
+
+            document.getElementById('verificationPanel').style.display = 'block';
+            document.getElementById('resultCard').style.display = 'none';
+
+            const btn = document.getElementById('verifyBtn');
+            btn.disabled = true;
+            btn.textContent = '⟳ VERIFYING...';
+            btn.style.opacity = '0.6';
+
+            [1, 2, 3, 4].forEach(i => setStepState(i, 'pending'));
+            document.getElementById('overallProgress').style.width = '0%';
+
+            // Run sequence
+            setTimeout(() => { setStepState(1, 'running'); document.getElementById('overallProgress').style.width = '10%'; }, 300);
+            setTimeout(() => { setStepState(1, 'done'); document.getElementById('overallProgress').style.width = '25%'; setStepState(2, 'running'); }, 1500);
+            setTimeout(() => {
+                setStepState(2, 'done');
+                document.getElementById('stepDetail2').textContent = isFailed ? 'SIM not found in carrier database' : 'SIM registered — Airtel India ✓';
+                document.getElementById('overallProgress').style.width = '50%';
+                setStepState(3, 'running');
+            }, 3000);
+            setTimeout(() => {
+                setStepState(3, isFailed ? 'failed' : 'done');
+                document.getElementById('stepDetail3').textContent = isFailed ? 'Fraud score: 87/100 — HIGH RISK ✗' : 'Fraud score: 3/100 — Low Risk ✓';
+                document.getElementById('overallProgress').style.width = '75%';
+                if (!isFailed) setStepState(4, 'running');
+            }, 4500);
+            setTimeout(() => {
+                if (!isFailed) { setStepState(4, 'done'); document.getElementById('stepDetail4').textContent = 'Identity confirmed ✓'; }
+                document.getElementById('overallProgress').style.width = '100%';
+                setTimeout(() => showResult(isFailed), 600);
+            }, isFailed ? 5000 : 6500);
+        }
+
+        function setStepState(i, state) {
+            const icon = document.getElementById('stepIcon' + i);
+            const detail = document.getElementById('stepDetail' + i);
+            const runningText = ['Connecting to servers...', 'Querying carrier...', 'Running AI detection...', 'Cross-referencing...'];
+
+            if (state === 'pending') {
+                icon.style.background = 'rgba(255,255,255,0.05)'; icon.style.borderColor = 'var(--border)'; icon.textContent = i; icon.style.color = 'var(--muted)';
+                detail.textContent = 'Waiting...'; detail.style.color = 'var(--muted)';
+            } else if (state === 'running') {
+                icon.style.background = 'rgba(255,209,102,0.1)'; icon.style.borderColor = 'var(--yellow)'; icon.style.color = 'var(--yellow)';
+                icon.innerHTML = '<span style="display:inline-block; animation:spin 1s linear infinite;">⟳</span>';
+                detail.textContent = runningText[i - 1]; detail.style.color = 'var(--yellow)';
+            } else if (state === 'done') {
+                icon.style.background = 'rgba(0,255,157,0.1)'; icon.style.borderColor = 'var(--green)'; icon.textContent = '✓'; icon.style.color = 'var(--green)';
+                detail.style.color = 'var(--green)';
+            } else if (state === 'failed') {
+                icon.style.background = 'rgba(255,45,59,0.1)'; icon.style.borderColor = 'var(--red)'; icon.textContent = '✗'; icon.style.color = 'var(--red)';
+                detail.style.color = 'var(--red)';
+            }
+        }
+
+        function showResult(isFailed) {
+            const card = document.getElementById('resultCard');
+            card.style.display = 'block';
+            const timeStr = new Date().toLocaleTimeString();
+
+            if (!isFailed) {
+                verifiedCountTotal++;
+                card.innerHTML = `
+          <div style="background:rgba(0,255,157,0.04); border:1px solid rgba(0,255,157,0.25); border-radius:14px; padding:1.75rem;">
+            <div style="display:flex; justify-content:space-between;">
+              <div>
+                <h2 style="font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--green);">✅ VERIFIED</h2>
+                <p style="color:var(--muted); font-size:0.83rem;">Contact successfully authenticated</p>
+              </div>
+              <div style="width:60px; height:60px; border-radius:50%; background:rgba(0,255,157,0.1); border:2px solid var(--green); display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:var(--green);">✓</div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-top:1.25rem;">
+              <div style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:8px;"><p style="font-size:0.6rem; color:var(--muted);">📱 Phone</p><p style="font-weight:600; font-size:0.85rem;">${currentPhone}</p></div>
+              <div style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:8px;"><p style="font-size:0.6rem; color:var(--muted);">🏢 Carrier</p><p style="font-weight:600; font-size:0.85rem;">Airtel India</p></div>
+              <div style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:8px;"><p style="font-size:0.6rem; color:var(--muted);">🛡️ Risk Score</p><p style="font-weight:600; font-size:0.85rem; color:var(--green);">3/100 — Low</p></div>
+              <div style="background:rgba(255,255,255,0.03); padding:0.75rem; border-radius:8px;"><p style="font-size:0.6rem; color:var(--muted);">📅 Verified</p><p style="font-weight:600; font-size:0.85rem;">${timeStr}</p></div>
+            </div>
+            <button onclick="addToContacts()" style="width:100%; margin-top:1.25rem; background:var(--green); color:#04060f; border:none; padding:0.85rem; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:1.2rem; cursor:pointer;">➕ ADD TO EMERGENCY CONTACTS</button>
+          </div>
+        `;
+            } else {
+                failedCountTotal++;
+                card.innerHTML = `
+          <div style="background:rgba(255,45,59,0.04); border:1px solid rgba(255,45,59,0.25); border-radius:14px; padding:1.75rem;">
+            <div style="display:flex; justify-content:space-between;">
+              <div>
+                <h2 style="font-family:'Bebas Neue',sans-serif; font-size:1.8rem; color:var(--red);">❌ VERIFICATION FAILED</h2>
+                <p style="color:var(--muted); font-size:0.83rem;">Could not authenticate channel</p>
+              </div>
+              <div style="width:60px; height:60px; border-radius:50%; background:rgba(255,45,59,0.1); border:2px solid var(--red); display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:var(--red);">✗</div>
+            </div>
+            <div style="background:rgba(255,45,59,0.06); border:1px solid rgba(255,45,59,0.2); border-radius:8px; padding:1rem; margin-top:1rem; font-size:0.8rem; color:var(--muted);">
+              ⚠️ Do not add unverified numbers to emergency lists. This number shows high risk patterns or is unregistered.
+            </div>
+            <button onclick="resetVerification()" style="width:100%; margin-top:1rem; border:1px solid var(--border); padding:0.85rem; border-radius:10px; background:transparent; color:var(--text); cursor:pointer;">🔄 Try Another Number</button>
+          </div>
+        `;
+            }
+
+            updateStats();
+            const btn = document.getElementById('verifyBtn');
+            btn.disabled = false; btn.textContent = '🔍 VERIFY NUMBER'; btn.style.opacity = '1';
+        }
+
+        function addToContacts() {
+            const idx = contacts.length + 1;
+            const colors = ['#00e5ff', '#00ff9d', '#ff2d3b', '#ffd166'];
+            contacts.unshift({
+                id: nextId++,
+                name: 'Contact ' + idx,
+                phone: currentPhone,
+                relation: 'Emergency',
+                carrier: 'Airtel India',
+                color: colors[idx % 4]
+            });
+            renderContacts();
+            if (window.toast) toast('Contact added successfully!', 'success');
+            resetVerification();
+        }
+
+        function removeContact(id) {
+            contacts = contacts.filter(c => c.id !== id);
+            renderContacts();
+            if (window.toast) toast('Contact removed', 'info');
+        }
+
+        function updateStats() {
+            document.getElementById('failedCount').textContent = failedCountTotal;
+            const total = (verifiedCountTotal + failedCountTotal);
+            const rate = total === 0 ? 100 : Math.round((verifiedCountTotal / total) * 100);
+            document.getElementById('successRate').textContent = rate + '%';
+        }
+
+        function resetVerification() {
+            document.getElementById('verificationPanel').style.display = 'none';
+            document.getElementById('resultCard').style.display = 'none';
+            document.getElementById('phoneInput').value = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', renderContacts);
+    </script>
+</body>
+
+</html>
