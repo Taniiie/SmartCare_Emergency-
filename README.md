@@ -1,41 +1,58 @@
 # ⚕ SmartCare Emergency Response Platform
 
-Welcome to the **SmartCare** project built for Team NeuroTech! This is a multi-page static web application.
+SmartCare is a high-stakes, real-time emergency response platform designed to connect patients to medical assets (Ambulances, Doctors, and Drones) in seconds. Built with a premium design language, the platform offers a unified command center for emergency logistics and analytics.
 
-## 🚀 How to Run
-
-Since this project uses plain HTML, CSS, and JavaScript with CDN-based libraries, you don't need to install anything.
-
-# SmartCare — Emergency Response Platform
-
-A real-time emergency response web app showcasing a premium design system and simulated real-time API integrations.
+![SmartCare Hero](./assets/images/hero.png)
 
 ## 🚀 Key Features
-- **SOS Activation**: High-stakes emergency pipeline.
-- **Live Asset Tracking**: Ambulance & Drone GPS simulation with Leaflet.js.
-- **Telemedicine**: Live video consultation with vitals monitoring.
-- **Secure Verification**: Identity authentication UI.
-- **Admin Insights**: Data visualization for response metrics.
 
-## 🏗️ Project Structure
-- `index.html`: Landing page with hero animations & stats.
-- `dashboard.html`: Main SOS command center.
-- `map.html`: Live assets tracker.
-- `telemedicine.html`: Video call & vital monitor.
-- `drone.html`: Mission control for drone dispatch.
-- `verify.html`: Identity verification interface.
-- `admin.html`: Performance analytics dashboard.
+### 1. Unified Emergency Dashboard
+The core mission control for patients and responders. Trigger an SOS to activate a multi-asset response pipeline with live ETA tracking and status logs.
 
-## 🛠️ Technology Stack
-- **Structure**: Semantic HTML5
-- **Styling**: Vanilla CSS (CSS Variables, Grid, Flexbox)
-- **Logic**: Vanilla JavaScript
-- **Libraries**: Leaflet.js, Chart.js, Jitsi Meet (via CDN)
+![Emergency Dashboard](./assets/images/emergency-dashboard.png)
 
-## 🚦 Getting Started
-1. Clone the repository.
-2. Open `index.html` in any modern web browser.
-3. Use a static server (like `npx serve .`) for the best experience with maps and video.
+### 2. Live Asset Tracking
+A full-screen interactive map powered by **Leaflet.js** and **CartoDB**. Track ambulances and drones in real-time as they navigate toward the patient with dynamic path-finding.
+
+![Live Tracking](./assets/images/live-map.png)
+
+### 3. Drone Dispatch & Logistics
+Mission control for autonomous medical supply delivery. Select cargo (Medicines, AEDs, Emergency Kits) and dispatch drones to specific map coordinates with flight path simulation.
+
+![Drone Dispatch](./assets/images/drone-dispatch.png)
+
+### 4. Telemedicine Portal
+Encrypted video consultation platform with integrated real-time patient vitals monitoring (Heart Rate, SpO2, Blood Pressure, Temperature).
+
+![Telemedicine Portal](./assets/images/telemedicine.png)
+
+### 5. Admin Impact Dashboard
+Comprehensive analytics suite for platform performance. Features interactive **Chart.js** visualizations, KPI counter animations, and a live platform activity feed.
 
 ---
-**Build for life.**
+
+## 💅 Premium UI/UX Polish
+- **Smooth Page Transitions**: Dark fade-out/in transitions for a seamless SPA feel.
+- **Micro-Animations**: Spring-based physics (`cubic-bezier`) for all buttons and card interactions.
+- **Interactive Ripples**: Modern feedback on all clickable elements.
+- **Glassmorphism Design**: High-contrast, futuristic dark theme with blurred overlays.
+
+---
+
+## 🛠️ Technical Stack
+- **Frontend**: Vanilla HTML5, CSS3, JavaScript (ES6+)
+- **Mapping**: [Leaflet.js](https://leafletjs.com/)
+- **Charts**: [Chart.js](https://www.chartjs.org/)
+- **Telemedicine**: [Jitsi Meet API](https://jitsi.org/jitsi-meet/)
+- **Animations**: CSS Keyframes, Intersection Observer API
+
+---
+
+## 🚦 Getting Started
+1. Clone the repository to your local machine.
+2. Ensure you have a local web server (e.g., `npx serve .` or Live Server).
+3. Open `index.html` to enter the landing page.
+4. Explore the platform using the navigation bar.
+
+---
+**Every second counts. SmartCare.**
